@@ -33,9 +33,9 @@ int main (int argc, char* const* argv){
         float tam = parser.get<float>("size");
         cv::FileStorage fs(parser.get<cv::String>(0), cv::FileStorage::READ);
         cv::VideoCapture captura(parser.get<cv::String>(1));
-        cv::Size plantillaSize(rows, cols);
+        cv::Size plantillaSize(5, 4);
         cv::Size plantillaSize1(-1, -1);
-        std::vector<cv::Point3d> centros;
+        std::vector<cv::Point2f> centros;
 
         if (!parser.check()){
             parser.printErrors();
@@ -47,39 +47,38 @@ int main (int argc, char* const* argv){
 		    return -1;
     	}
 
-    	std::cout<<"Hola 1\n";
-
     	cv::Mat cameraMatrix;
     	cv::Mat distCoeffs;
-    	std::vector<cv::Point2d>image_points;
-    	std::vector<cv::Point3d>modal_view;
-    	/*for (int i = 0; i < cols; i++) {
+    	std::vector<cv::Point2f>image_points;
+    	std::vector<cv::Point3f>modal_view;
+    	for (int i = 0; i < cols; i++) {
        		for(int j = 0; j < rows; j++){
           		modal_view.push_back(cv::Point3f(j*tam,i*tam, 0.0f));
         	}
-      	}*/
-    	std::cout<<"Hola 2\n";
+      	}
     	fs["camera_matrix"] >> cameraMatrix;
-    	std::cout<<"Hola 3\n";
     	fs["distortion_coefficients"] >> distCoeffs;
-    	std::cout<<"Hola 4\n";
-
     	fs["image_point"]>>image_points;
-    	std::cout<<"Hola 5\n";
 
-    	cv::Mat frame;
-    	cv::Mat rotation_vector; // Rotation in axis-angle form
+    	cv::Mat rotation_vector; 
     	cv::Mat translation_vector;
     	for(;;){
-
+    		cv::Mat frame;
+    		captura >> frame;
+    		cv::Mat frameAux;
+    		cv::cvtColor(frame, frameAux, CV_BGR2GRAY);
         	if (!captura.read(frame))             
             	break;
             bool plantilla = cv::findChessboardCorners(frame, plantillaSize, centros);
-            //cv::drawChessboardCorners(frame, plantillaSize,cv::Mat(centros),plantilla);
-        	//cv::cornerSubPix(frame, centros, plantillaSize, plantillaSize1, cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::MAX_ITER, 40, 0.001));
-            cv::solvePnP(centros, image_points, cameraMatrix, distCoeffs, rotation_vector, translation_vector);
-            //cv::projectPoints(front_object_pts, rvec_front, tvec_front, 
-             //cameraMatrix_Front, distCoeffs_Front, check_front_image_pts);
+            std::cout<<plantilla<<std::endl;
+            if(plantilla==1){
+	            cv::drawChessboardCorners(frame, plantillaSize, cv::Mat(centros), plantilla);
+	        	//cv::cornerSubPix(frameAux, centros, plantillaSize, plantillaSize1, cv::TermCriteria(cv::TermCriteria::COUNT | cv::TermCriteria::EPS, 20, 0.03));
+	            cv::solvePnP(centros, image_points, cameraMatrix, distCoeffs, rotation_vector, translation_vector);
+	            std::vector<cv::Point2f> puntosProyectados;
+	            cv::projectPoints(image_points, rotation_vector, translation_vector, cameraMatrix, distCoeffs, puntosProyectados);
+	            cv::line(frame, puntosProyectados[0], puntosProyectados[1], (255,0,0));
+	        }    
         	cv::imshow("window", frame);
 
         	char key = cvWaitKey(10);
