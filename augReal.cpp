@@ -9,7 +9,7 @@
 #include <opencv2/calib3d/calib3d.hpp>
 
 const cv::String keys =
-    "{help h usage ? |      | print this message   }"
+    "{help h usage ?    |      | print this message   }"
     "{row               |  0.0 | filas             }"
     "{col               |  0.0 | columnas                }"
     "{size              |  0.0 | size    }"
@@ -33,7 +33,7 @@ int main (int argc, char* const* argv){
         float tam = parser.get<float>("size");
         cv::FileStorage fs(parser.get<cv::String>(0), cv::FileStorage::READ);
         cv::VideoCapture captura(parser.get<cv::String>(1));
-        cv::Size plantillaSize(5, 4);
+        cv::Size plantillaSize(5, 5);
         cv::Size plantillaSize1(-1, -1);
         std::vector<cv::Point2f> centros;
 
@@ -51,14 +51,13 @@ int main (int argc, char* const* argv){
     	cv::Mat distCoeffs;
     	std::vector<cv::Point2f>image_points;
     	std::vector<cv::Point3f>modal_view;
-    	for (int i = 0; i < cols; i++) {
-       		for(int j = 0; j < rows; j++){
-          		modal_view.push_back(cv::Point3f(j*tam,i*tam, 0.0f));
+    	for (int i = 0; i < rows; i++) {
+       		for(int j = 0; j < cols; j++){
+          		modal_view.push_back(cv::Point3f(j*tam,i*tam, 0));
         	}
       	}
     	fs["camera_matrix"] >> cameraMatrix;
     	fs["distortion_coefficients"] >> distCoeffs;
-    	fs["image_point"]>>image_points;
 
     	cv::Mat rotation_vector; 
     	cv::Mat translation_vector;
@@ -69,19 +68,24 @@ int main (int argc, char* const* argv){
     		cv::cvtColor(frame, frameAux, CV_BGR2GRAY);
         	if (!captura.read(frame))             
             	break;
-            bool plantilla = cv::findChessboardCorners(frame, plantillaSize, centros);
-            std::cout<<plantilla<<std::endl;
+            bool plantilla = cv::findChessboardCorners(frame, cv::Size(cols,rows), centros, cv::CALIB_CB_FAST_CHECK);
             if(plantilla==1){
-	            cv::drawChessboardCorners(frame, plantillaSize, cv::Mat(centros), plantilla);
-	        	//cv::cornerSubPix(frameAux, centros, plantillaSize, plantillaSize1, cv::TermCriteria(cv::TermCriteria::COUNT | cv::TermCriteria::EPS, 20, 0.03));
-	            cv::solvePnP(centros, image_points, cameraMatrix, distCoeffs, rotation_vector, translation_vector);
+	        	cv::cornerSubPix(frameAux, centros, plantillaSize, plantillaSize1, cv::TermCriteria(cv::TermCriteria::COUNT | cv::TermCriteria::EPS, 20, 0.03));
+	            cv::solvePnP(modal_view, centros, cameraMatrix, distCoeffs, rotation_vector, translation_vector);
 	            std::vector<cv::Point2f> puntosProyectados;
-	            cv::projectPoints(image_points, rotation_vector, translation_vector, cameraMatrix, distCoeffs, puntosProyectados);
-	            cv::line(frame, puntosProyectados[0], puntosProyectados[1], (255,0,0));
+	            std::vector<cv::Point3f> puntos3d;
+	            puntos3d.push_back(cv::Point3f(0, 0, 0));
+	            puntos3d.push_back(cv::Point3f(tam, 0, 0));
+	            puntos3d.push_back(cv::Point3f(0, tam, 0));
+	            puntos3d.push_back(cv::Point3f(0, 0, -tam));
+	            cv::projectPoints(puntos3d, rotation_vector, translation_vector, cameraMatrix, distCoeffs, puntosProyectados);
+				cv::line(frame, puntosProyectados[0], puntosProyectados[1], cv::Scalar(0,0,255), 6);
+				cv::line(frame, puntosProyectados[0], puntosProyectados[2], cv::Scalar(0,255,0), 6);
+				cv::line(frame, puntosProyectados[0], puntosProyectados[3], cv::Scalar(255,0,0), 6);   
 	        }    
         	cv::imshow("window", frame);
 
-        	char key = cvWaitKey(10);
+        	char key = cvWaitKey(20); //Tiempo que espera entre frame y frame
         	if (key == 27) // ESC
             	break;
     	}
