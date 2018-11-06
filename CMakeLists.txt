@@ -6,5 +6,5 @@ include_directories ("${OpenCV_INCLUDE_DIRS}")
 SET(CMAKE_CXX_FLAGS)
 LINK_LIBRARIES(${OpenCV_LIBS} )
 add_executable(calibracion camera_calibration.cpp)
-add_executable(augReal augReal.cpp)
+add_executable(augReal augReal.cpp funcionesAuxiliares.cpp)
 
