@@ -1,5 +1,8 @@
 #include <iostream>
 #include <exception>
+#include <string>
+#include <ctime>
+#include <cstdio>
 
 //Includes para OpenCV, Descomentar según los módulo utilizados.
 #include <opencv2/core/core.hpp>
@@ -7,6 +10,9 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/videoio.hpp>
+#include <opencv2/highgui.hpp>
 #include "funcionesAuxiliares.hpp"
 #include "macros.hpp"
 
@@ -40,7 +46,13 @@ int main (int argc, char* const* argv){
         	exit(-1);
         }
 
-        cv::VideoCapture captura(parser.get<cv::String>(1));
+        cv::VideoCapture captura;
+
+        if(digito(parser.get<cv::String>(1))){
+            captura.open(0);
+        }else
+            captura.open(parser.get<cv::String>(1));
+
         cv::Size plantillaSize(5, 5);
         cv::Size plantillaSize1(-1, -1);
         std::vector<cv::Point2f> centros;

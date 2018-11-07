@@ -66,3 +66,11 @@ void augRealLine(cv::VideoCapture captura, cv::Mat cameraMatrix, cv::Mat distCoe
         	break;
 	}
 }
+
+bool digito(std::string nombre){
+    if(nombre[0]=='0'){
+        return true;   
+    }else {
+        return false;
+    }
+}
